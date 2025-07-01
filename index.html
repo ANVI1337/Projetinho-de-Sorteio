@@ -110,13 +110,30 @@
       return resultado;
     }
 
-    const sorteio = gerarSorteio(nomes);
+    // Carrega ou gera o sorteio
+    let sorteio = JSON.parse(localStorage.getItem('sorteioGlobal'));
+    if (!sorteio) {
+      sorteio = gerarSorteio(nomes);
+      localStorage.setItem('sorteioGlobal', JSON.stringify(sorteio));
+    }
+
     const som = document.getElementById('efeito-som');
 
     function mostrarResultado(nome, btn) {
+      const chave = `sorteado_${nome}`;
+      const resultadoSalvo = localStorage.getItem(chave);
+
+      let sorteado;
+      if (resultadoSalvo) {
+        sorteado = resultadoSalvo;
+      } else {
+        sorteado = sorteio[nome];
+        localStorage.setItem(chave, sorteado);
+      }
+
       const modal = document.getElementById('modal');
       const msg = document.getElementById('modal-msg');
-      msg.innerHTML = `<strong>${nome}</strong>, você tirou <strong>${sorteio[nome]}</strong>!`;
+      msg.innerHTML = `<strong>${nome}</strong>, você tirou <strong>${sorteado}</strong>!`;
       modal.style.display = 'flex';
 
       som.pause();
@@ -136,6 +153,11 @@
       btn.textContent = nome;
       btn.className = "nome-btn";
       btn.onclick = () => mostrarResultado(nome, btn);
+
+      if (localStorage.getItem(`sorteado_${nome}`)) {
+        btn.disabled = true;
+      }
+
       botoesDiv.appendChild(btn);
     });
   </script>
