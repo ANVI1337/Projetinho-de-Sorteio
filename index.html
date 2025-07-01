@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sorteio Discipulado</title>
+  <title>Discipulado com Firebase</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -27,8 +27,9 @@
       border-radius: 5px;
       cursor: pointer;
       user-select: none;
+      transition: background-color 0.3s;
     }
-    .nome-btn:hover {
+    .nome-btn:hover:not(:disabled) {
       background-color: #6a1b9a;
     }
     .nome-btn:disabled {
@@ -53,7 +54,8 @@
       padding: 2rem;
       border-radius: 10px;
       text-align: center;
-      max-width: 300px;
+      max-width: 320px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
     }
     .close-btn {
       margin-top: 1rem;
@@ -63,6 +65,12 @@
       padding: 0.5rem 1rem;
       border-radius: 5px;
       cursor: pointer;
+      user-select: none;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    .close-btn:hover {
+      background-color: #aa1270;
     }
     footer {
       margin-top: auto;
@@ -72,6 +80,29 @@
       font-size: 0.9rem;
     }
   </style>
+
+  <!-- Firebase SDKs via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbh-OdbzXcCUcYAL3zYX4Vhlx1KiYHeZE",
+      authDomain: "projetinho-sorteio.firebaseapp.com",
+      databaseURL: "https://projetinho-sorteio-default-rtdb.firebaseio.com",
+      projectId: "projetinho-sorteio",
+      storageBucket: "projetinho-sorteio.appspot.com",
+      messagingSenderId: "505871010797",
+      appId: "1:505871010797:web:b21df96f3573b249a935e4",
+      measurementId: "G-LW98GWD45V"
+    };
+
+    // Inicializa Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+    const database = firebase.database();
+  </script>
 </head>
 <body>
 
@@ -86,47 +117,24 @@
     </div>
   </div>
 
-  <footer>&copy; 2025 Feito com Front e Fire por ANVI1337</footer>
+  <footer>&copy; 2025 Feito com Front por Vini</footer>
 
   <audio id="efeito-som" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-analytics.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBbh-OdbzXcCUcYAL3zYX4Vhlx1KiYHeZE",
-      authDomain: "projetinho-sorteio.firebaseapp.com",
-      databaseURL: "https://projetinho-sorteio-default-rtdb.firebaseio.com",
-      projectId: "projetinho-sorteio",
-      storageBucket: "projetinho-sorteio.appspot.com",
-      messagingSenderId: "505871010797",
-      appId: "1:505871010797:web:b21df96f3573b249a935e4",
-      measurementId: "G-LW98GWD45V"
-    };
-
-    // Inicializa Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const database = getDatabase(app);
-
+  <script>
     const nomes = ["Tereza", "Anne", "Gabby", "Jéssika", "Tati", "Vini", "André", "Felipe", "Haniel"];
     const botoesDiv = document.getElementById('botoes');
     const som = document.getElementById('efeito-som');
 
-    // Busca dados do banco
     async function buscarSorteados() {
-      const snapshot = await get(ref(database, 'sorteados'));
+      const snapshot = await database.ref('sorteados').get();
       return snapshot.exists() ? snapshot.val() : {};
     }
 
-    // Salva sorteio no banco
     async function salvarSorteio(nome, sorteado) {
-      await set(ref(database, `sorteados/${nome}`), sorteado);
+      await database.ref(`sorteados/${nome}`).set(sorteado);
     }
 
-    // Mostra modal
     function mostrarModal(msg) {
       const modal = document.getElementById('modal');
       const modalMsg = document.getElementById('modal-msg');
@@ -138,12 +146,10 @@
       som.play().catch(() => {});
     }
 
-    // Fecha modal
     function fecharModal() {
       document.getElementById('modal').style.display = 'none';
     }
 
-    // Mostra resultado do sorteio
     async function mostrarResultado(nome, btn) {
       const sorteados = await buscarSorteados();
 
@@ -169,7 +175,6 @@
       btn.disabled = true;
     }
 
-    // Cria botões
     async function criarBotoes() {
       const sorteados = await buscarSorteados();
 
@@ -188,6 +193,12 @@
 
     criarBotoes();
 
+    // Fecha o modal ao clicar fora da área modal-content
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target.classList.contains('modal')) {
+        fecharModal();
+      }
+    });
   </script>
 
 </body>
