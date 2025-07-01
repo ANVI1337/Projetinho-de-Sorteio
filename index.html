@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Discipula</title>
+  <title>Sorteio Discipulado</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -75,7 +75,7 @@
 </head>
 <body>
 
-  <h1>Discipulado da Primícias</h1>
+  <h1>Discipulado das Primícias</h1>
   <p>Clique no seu nome para descobrir quem você tirou (você só pode ver uma vez):</p>
   <div id="botoes"></div>
 
@@ -86,80 +86,108 @@
     </div>
   </div>
 
-  <footer>&copy; 2025 Feito com Front por Vini</footer>
+  <footer>&copy; 2025 Feito com Front e Fire por ANVI1337</footer>
 
-  <audio id="efeito-som" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_6d44c8e3ab.mp3?filename=message-pop-alert-112697.mp3" preload="auto"></audio>
+  <audio id="efeito-som" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
 
-  <script>
-    const nomes = ["Tereza", "Anne", "Gabby", "Jéssika","Tati", "Vini","André","Felipe","Haniel"];
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-analytics.js";
 
-    function gerarSorteio(participantes) {
-      let sorteados;
-      do {
-        sorteados = [...participantes];
-        for (let i = sorteados.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [sorteados[i], sorteados[j]] = [sorteados[j], sorteados[i]];
-        }
-      } while (sorteados.some((p, i) => p === participantes[i]));
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbh-OdbzXcCUcYAL3zYX4Vhlx1KiYHeZE",
+      authDomain: "projetinho-sorteio.firebaseapp.com",
+      databaseURL: "https://projetinho-sorteio-default-rtdb.firebaseio.com",
+      projectId: "projetinho-sorteio",
+      storageBucket: "projetinho-sorteio.appspot.com",
+      messagingSenderId: "505871010797",
+      appId: "1:505871010797:web:b21df96f3573b249a935e4",
+      measurementId: "G-LW98GWD45V"
+    };
 
-      const resultado = {};
-      participantes.forEach((p, i) => {
-        resultado[p] = sorteados[i];
-      });
-      return resultado;
-    }
+    // Inicializa Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const database = getDatabase(app);
 
-    // Carrega ou gera o sorteio
-    let sorteio = JSON.parse(localStorage.getItem('sorteioGlobal'));
-    if (!sorteio) {
-      sorteio = gerarSorteio(nomes);
-      localStorage.setItem('sorteioGlobal', JSON.stringify(sorteio));
-    }
-
+    const nomes = ["Tereza", "Anne", "Gabby", "Jéssika", "Tati", "Vini", "André", "Felipe", "Haniel"];
+    const botoesDiv = document.getElementById('botoes');
     const som = document.getElementById('efeito-som');
 
-    function mostrarResultado(nome, btn) {
-      const chave = `sorteado_${nome}`;
-      const resultadoSalvo = localStorage.getItem(chave);
+    // Busca dados do banco
+    async function buscarSorteados() {
+      const snapshot = await get(ref(database, 'sorteados'));
+      return snapshot.exists() ? snapshot.val() : {};
+    }
 
-      let sorteado;
-      if (resultadoSalvo) {
-        sorteado = resultadoSalvo;
-      } else {
-        sorteado = sorteio[nome];
-        localStorage.setItem(chave, sorteado);
-      }
+    // Salva sorteio no banco
+    async function salvarSorteio(nome, sorteado) {
+      await set(ref(database, `sorteados/${nome}`), sorteado);
+    }
 
+    // Mostra modal
+    function mostrarModal(msg) {
       const modal = document.getElementById('modal');
-      const msg = document.getElementById('modal-msg');
-      msg.innerHTML = `<strong>${nome}</strong>, você tirou <strong>${sorteado}</strong>!`;
+      const modalMsg = document.getElementById('modal-msg');
+      modalMsg.innerHTML = msg;
       modal.style.display = 'flex';
 
       som.pause();
       som.currentTime = 0;
       som.play().catch(() => {});
-
-      btn.disabled = true;
     }
 
+    // Fecha modal
     function fecharModal() {
       document.getElementById('modal').style.display = 'none';
     }
 
-    const botoesDiv = document.getElementById('botoes');
-    nomes.forEach(nome => {
-      const btn = document.createElement('button');
-      btn.textContent = nome;
-      btn.className = "nome-btn";
-      btn.onclick = () => mostrarResultado(nome, btn);
+    // Mostra resultado do sorteio
+    async function mostrarResultado(nome, btn) {
+      const sorteados = await buscarSorteados();
 
-      if (localStorage.getItem(`sorteado_${nome}`)) {
+      if (sorteados[nome]) {
+        mostrarModal(`<strong>${nome}</strong>, você já tirou <strong>${sorteados[nome]}</strong>!`);
         btn.disabled = true;
+        return;
       }
 
-      botoesDiv.appendChild(btn);
-    });
+      const nomesUsados = Object.values(sorteados);
+      const possiveis = nomes.filter(n => n !== nome && !nomesUsados.includes(n));
+
+      if (possiveis.length === 0) {
+        mostrarModal("Não há mais nomes disponíveis para sortear.");
+        return;
+      }
+
+      const sorteado = possiveis[Math.floor(Math.random() * possiveis.length)];
+
+      await salvarSorteio(nome, sorteado);
+
+      mostrarModal(`<strong>${nome}</strong>, você tirou <strong>${sorteado}</strong>!`);
+      btn.disabled = true;
+    }
+
+    // Cria botões
+    async function criarBotoes() {
+      const sorteados = await buscarSorteados();
+
+      nomes.forEach(nome => {
+        const btn = document.createElement('button');
+        btn.textContent = nome;
+        btn.className = 'nome-btn';
+        btn.onclick = () => mostrarResultado(nome, btn);
+        if (sorteados[nome]) {
+          btn.disabled = true;
+          btn.title = `Você já tirou: ${sorteados[nome]}`;
+        }
+        botoesDiv.appendChild(btn);
+      });
+    }
+
+    criarBotoes();
+
   </script>
 
 </body>
