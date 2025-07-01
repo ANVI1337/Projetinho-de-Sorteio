@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discipulado das Primicias</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #fce4ec, #c4c125);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #a55b82;
+    }
+    .nome-btn {
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      background-color: #ad1457;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .nome-btn:hover {
+      background-color: #6a1b9a;
+    }
+    .mensagem {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #ffffffdd;
+      border-radius: 10px;
+      max-width: 400px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Discipulado das Primicias</h1>
+  <p>Clique no seu nome para descobrir quem você tirou:</p>
+  <div id="botoes"></div>
+  <div class="mensagem" id="mensagem"></div>
+
+  <script>
+    // Lista de participantes (você preenche manualmente)
+    const nomes = ["Vini", "Tereza", "Anne", "Felipe", "André", "Jessika","Gabby","Haniel"];
+
+    // Sorteio embaralhado (garante que ninguém tira a si mesmo)
+    function gerarSorteio(participantes) {
+      let sorteados;
+      do {
+        sorteados = [...participantes];
+        for (let i = sorteados.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [sorteados[i], sorteados[j]] = [sorteados[j], sorteados[i]];
+        }
+      } while (sorteados.some((p, i) => p === participantes[i]));
+
+      const resultado = {};
+      participantes.forEach((p, i) => {
+        resultado[p] = sorteados[i];
+      });
+      return resultado;
+    }
+
+    const sorteio = gerarSorteio(nomes);
+
+    function mostrarResultado(nome) {
+      const mensagem = document.getElementById('mensagem');
+      mensagem.innerHTML = `<strong>${nome}</strong>, você tirou <strong>${sorteio[nome]}</strong>!`;
+    }
+
+    // Criar botões
+    const botoesDiv = document.getElementById('botoes');
+    nomes.forEach(nome => {
+      const btn = document.createElement('button');
+      btn.textContent = nome;
+      btn.className = "nome-btn";
+      btn.onclick = () => mostrarResultado(nome);
+      botoesDiv.appendChild(btn);
+    });
+  </script>
+</body>
+</html>
