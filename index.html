@@ -1,209 +1,167 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sorteio Discipulado</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #fce4ec, #c21039);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-      min-height: 100vh;
-      box-sizing: border-box;
-    }
-    h1 {
-      color: #880e4f;
-    }
-    .nome-btn {
-      padding: 0.5rem 1rem;
-      margin: 0.5rem;
-      background-color: #311722;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      user-select: none;
-      transition: background-color 0.3s;
-    }
-    .nome-btn:hover:not(:disabled) {
-      background-color: #6a1b9a;
-    }
-    .nome-btn:disabled {
-      background-color: #ccc;
-      cursor: default;
-      color: #666;
-      text-decoration: line-through;
-    }
-    .modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
-    .modal-content {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      text-align: center;
-      max-width: 320px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    }
-    .close-btn {
-      margin-top: 1rem;
-      background-color: #880e4f;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      user-select: none;
-      font-weight: bold;
-      transition: background-color 0.3s;
-    }
-    .close-btn:hover {
-      background-color: #aa1270;
-    }
-    footer {
-      margin-top: auto;
-      padding: 1rem;
-      text-align: center;
-      color: #880e4f;
-      font-size: 0.9rem;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sorteio Discipulado</title>
 
-  <!-- Firebase SDKs via CDN -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+<style>
+body{
+  font-family:Arial;
+  background:linear-gradient(to right,#fce4ec,#c21039);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:2rem;
+}
+.nome-btn{
+  padding:.5rem 1rem;
+  margin:.4rem;
+  background:#311722;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+.nome-btn:disabled{
+  background:#ccc;
+  text-decoration:line-through;
+}
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+.modal-content{
+  background:#fff;
+  padding:1.5rem;
+  border-radius:10px;
+  text-align:center;
+  width:300px;
+}
+input,button{
+  margin-top:.6rem;
+  padding:.5rem;
+  width:100%;
+}
+</style>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBbh-OdbzXcCUcYAL3zYX4Vhlx1KiYHeZE",
-      authDomain: "projetinho-sorteio.firebaseapp.com",
-      databaseURL: "https://projetinho-sorteio-default-rtdb.firebaseio.com",
-      projectId: "projetinho-sorteio",
-      storageBucket: "projetinho-sorteio.appspot.com",
-      messagingSenderId: "505871010797",
-      appId: "1:505871010797:web:b21df96f3573b249a935e4",
-      measurementId: "G-LW98GWD45V"
-    };
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    // Inicializa Firebase
-    firebase.initializeApp(firebaseConfig);
-    firebase.analytics();
-    const database = firebase.database();
-  </script>
+<!-- EmailJS (ANTES de usar) -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<script>
+emailjs.init("SHl9LDYLbEucrxB3p");
+</script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBbh-OdbzXcCUcYAL3zYX4Vhlx1KiYHeZE",
+  authDomain: "projetinho-sorteio.firebaseapp.com",
+  databaseURL: "https://projetinho-sorteio-default-rtdb.firebaseio.com",
+  projectId: "projetinho-sorteio",
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+</script>
 </head>
+
 <body>
 
-  <h1>Discipulado das Primícias</h1>
-  <p>Clique no seu nome para descobrir quem você tirou (você só pode ver uma vez):</p>
-  <div id="botoes"></div>
+<h2>Discipulado das Primícias</h2>
+<div id="botoes"></div>
 
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <div id="modal-msg"></div>
-      <button class="close-btn" onclick="fecharModal()">Fechar</button>
-    </div>
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div id="modal-msg"></div>
+    <input id="email" type="email" placeholder="Digite seu email">
+    <button onclick="enviarEmail()">Enviar Email</button>
+    <button onclick="fecharModal()">Fechar</button>
   </div>
+</div>
 
-  <footer>&copy; 2025 Feito com Front e Fire por ANVI1337</footer>
+<script>
+const nomes = ["Tereza","Anne","Gabby","Kaká","Tati","Vini","André","Felipe","Isa"];
+let nomeAtual = "";
+let nomeSorteadoAtual = "";
 
-  <audio id="efeito-som" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
+async function buscarSorteados(){
+  const s = await database.ref("sorteados").get();
+  return s.exists()? s.val():{};
+}
 
-  <script>
-    const nomes = ["Tereza", "Anne", "Gabby", "Kaká", "Tati", "Vini", "André", "Felipe", "Isa","Elydlon","Day","Vitória","Bia"];
-    const botoesDiv = document.getElementById('botoes');
-    const som = document.getElementById('efeito-som');
+async function salvar(nome,sorteado){
+  await database.ref("sorteados/"+nome).set(sorteado);
+}
 
-    async function buscarSorteados() {
-      const snapshot = await database.ref('sorteados').get();
-      return snapshot.exists() ? snapshot.val() : {};
+function abrirModal(msg){
+  document.getElementById("modal-msg").innerHTML = msg;
+  document.getElementById("modal").style.display="flex";
+}
+
+function fecharModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+async function sortear(nome,btn){
+  nomeAtual = nome;
+  const dados = await buscarSorteados();
+  if(dados[nome]){
+    abrirModal(`Você já tirou <b>${dados[nome]}</b>`);
+    return;
+  }
+  const usados = Object.values(dados);
+  const possiveis = nomes.filter(n=>n!==nome && !usados.includes(n));
+  nomeSorteadoAtual = possiveis[Math.floor(Math.random()*possiveis.length)];
+  await salvar(nome,nomeSorteadoAtual);
+  btn.disabled=true;
+  abrirModal(`Você tirou <b>${nomeSorteadoAtual}</b><br><small>Digite seu email</small>`);
+}
+
+async function criarBotoes(){
+  const dados = await buscarSorteados();
+  nomes.forEach(n=>{
+    const b=document.createElement("button");
+    b.textContent=n;
+    b.className="nome-btn";
+    b.onclick=()=>sortear(n,b);
+    if(dados[n]) b.disabled=true;
+    document.getElementById("botoes").appendChild(b);
+  });
+}
+
+function enviarEmail(){
+  const email = document.getElementById("email").value;
+  if(!email || !nomeSorteadoAtual){
+    alert("Email ou sorteio inválido");
+    return;
+  }
+
+  emailjs.send(
+    "service_8uobx3b",
+    "template_391sfag",
+    {
+      to_email: email,
+      nome_pessoa: nomeAtual,
+      nome_sorteado: nomeSorteadoAtual
     }
+  ).then(()=>{
+    alert("Email enviado com sucesso 🙏");
+    fecharModal();
+  }).catch(err=>{
+    console.error("ERRO EMAILJS:",err);
+    alert("Erro ao enviar email");
+  });
+}
 
-    async function salvarSorteio(nome, sorteado) {
-      await database.ref(`sorteados/${nome}`).set(sorteado);
-    }
-
-    function mostrarModal(msg) {
-      const modal = document.getElementById('modal');
-      const modalMsg = document.getElementById('modal-msg');
-      modalMsg.innerHTML = msg;
-      modal.style.display = 'flex';
-
-      som.pause();
-      som.currentTime = 0;
-      som.play().catch(() => {});
-    }
-
-    function fecharModal() {
-      document.getElementById('modal').style.display = 'none';
-    }
-
-    async function mostrarResultado(nome, btn) {
-      const sorteados = await buscarSorteados();
-
-      if (sorteados[nome]) {
-        mostrarModal(`<strong>${nome}</strong>, você já tirou <strong>${sorteados[nome]}</strong>!`);
-        btn.disabled = true;
-        return;
-      }
-
-      const nomesUsados = Object.values(sorteados);
-      const possiveis = nomes.filter(n => n !== nome && !nomesUsados.includes(n));
-
-      if (possiveis.length === 0) {
-        mostrarModal("Não há mais nomes disponíveis para sortear.");
-        return;
-      }
-
-      const sorteado = possiveis[Math.floor(Math.random() * possiveis.length)];
-
-      await salvarSorteio(nome, sorteado);
-
-      
-      btn.disabled = true;
-    }
-
-    async function criarBotoes() {
-      const sorteados = await buscarSorteados();
-
-      nomes.forEach(nome => {
-        const btn = document.createElement('button');
-        btn.textContent = nome;
-        btn.className = 'nome-btn';
-        btn.onclick = () => mostrarResultado(nome, btn);
-        if (sorteados[nome]) {
-          btn.disabled = true;
-          btn.title = `Você já tirou: ${sorteados[nome]}`;
-        }
-        botoesDiv.appendChild(btn);
-      });
-    }
-
-    criarBotoes();
-
-    // Fecha o modal ao clicar fora da área modal-content
-    document.getElementById('modal').addEventListener('click', function(e) {
-      if (e.target.classList.contains('modal')) {
-        fecharModal();
-      }
-    });
-  </script>
+criarBotoes();
+</script>
 
 </body>
 </html>
-
-
-
-
